@@ -1,0 +1,69 @@
+name: Build Dev Container Image
+
+on:
+  push:
+    tags:
+      - '*-v[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Determine image
+        id: image
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          tag="${GITHUB_REF_NAME}"
+
+          image="${tag%-v*}"
+          version="${tag#*-v}"
+
+          if [[ -z "$image" || "$image" == "$tag" ]]; then
+            echo "Invalid image tag: $tag"
+            exit 1
+          fi
+
+          image_directory="./${image}"
+          dockerfile="${image_directory}/Dockerfile"
+
+          if [[ ! -d "$image_directory" ]]; then
+            echo "No image directory exists for tag: $tag"
+            echo "Expected directory: $image_directory"
+            exit 1
+          fi
+
+          if [[ ! -f "$dockerfile" ]]; then
+            echo "No Dockerfile exists for image: $image"
+            echo "Expected file: $dockerfile"
+            exit 1
+          fi
+
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "context=$image_directory" >> "$GITHUB_OUTPUT"
+          echo "dockerfile=$dockerfile" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ steps.image.outputs.context }}
+          file: ${{ steps.image.outputs.dockerfile }}
+          push: true
+          tags: ghcr.io/amiasea/${{ steps.image.outputs.image }}:${{ steps.image.outputs.version }}
