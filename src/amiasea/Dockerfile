@@ -15,10 +15,5 @@ RUN wget -q https://packages.microsoft.com/config/ubuntu/24.04/packages-microsof
     && apt-get install -y --no-install-recommends powershell \
     && rm -rf /var/lib/apt/lists/*
 
-USER vscode
-
-COPY setup-powershell.ps1 /tmp/setup-powershell.ps1
-
-RUN pwsh -NoProfile -File /tmp/setup-powershell.ps1
-
-RUN rm /tmp/setup-powershell.ps1
+RUN --mount=type=bind,source=setup-powershell.ps1,target=/tmp/setup-powershell.ps1 \
+    pwsh -NoProfile -File /tmp/setup-powershell.ps1
