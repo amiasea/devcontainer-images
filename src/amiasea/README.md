@@ -4,9 +4,7 @@ The Amiasea development environment for building and operating Amiasea engineeri
 
 ## Image
 
-```text
-ghcr.io/amiasea/amiasea
-```
+[`ghcr.io/amiasea/amiasea`](https://github.com/amiasea/devcontainer-images/pkgs/container/amiasea)
 
 ## Contents
 

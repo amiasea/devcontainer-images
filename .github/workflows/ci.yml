@@ -127,7 +127,7 @@ jobs:
               echo "❌ **Image definition validation failed.**"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
-           
+
   build:
     runs-on: ubuntu-latest
     needs: validate
@@ -279,7 +279,7 @@ jobs:
             echo "| **Image** | \`${{ needs.validate.outputs.image }}\` |"
             echo "| **Version** | \`${{ needs.validate.outputs.version }}\` |"
             echo "| **Registry** | \`ghcr.io/amiasea\` |"
-            echo "| **Reference** | \`ghcr.io/amiasea/${{ needs.validate.outputs.image }}:${{ needs.validate.outputs.version }}\` |"
+            echo "| **Reference** | [\`ghcr.io/amiasea/${{ needs.validate.outputs.image }}:${{ needs.validate.outputs.version }}\`](https://github.com/amiasea/devcontainer-images/pkgs/container/${{ needs.validate.outputs.image }}) |"
             echo
             echo "### Result"
             echo
