@@ -41,15 +41,26 @@ jobs:
           image="${BASH_REMATCH[1]}"
           version="${BASH_REMATCH[2]}"
 
-          image_directory="./src/${image}"
-          dockerfile="${image_directory}/Dockerfile"
-          test_directory="./test/${image}"
+          image_directory=""
 
-          if [[ ! -d "$image_directory" ]]; then
+          while IFS= read -r directory; do
+            directory_name="${directory#./}"
+
+            if [[ "${directory_name,,}" == "${image,,}" ]]; then
+              image_directory="$directory"
+              image="$directory_name"
+              break
+            fi
+          done < <(find ./src -mindepth 1 -maxdepth 1 -type d -print)
+
+          if [[ -z "$image_directory" ]]; then
             echo "No image source directory exists for tag: $tag"
-            echo "Expected directory: $image_directory"
+            echo "Expected directory: ./src/${image}"
             exit 1
           fi
+
+          dockerfile="${image_directory}/Dockerfile"
+          test_directory="./test/${image}"
 
           if [[ ! -f "$dockerfile" ]]; then
             echo "No Dockerfile exists for image: $image"
@@ -57,9 +68,20 @@ jobs:
             exit 1
           fi
 
-          if [[ ! -d "$test_directory" ]]; then
+          test_directory=""
+
+          while IFS= read -r directory; do
+            directory_name="${directory#./}"
+
+            if [[ "${directory_name,,}" == "test/${image,,}" ]]; then
+              test_directory="$directory"
+              break
+            fi
+          done < <(find ./test -mindepth 1 -maxdepth 1 -type d -print)
+
+          if [[ -z "$test_directory" ]]; then
             echo "No test directory exists for image: $image"
-            echo "Expected directory: $test_directory"
+            echo "Expected directory: ./test/${image}"
             exit 1
           fi
 
