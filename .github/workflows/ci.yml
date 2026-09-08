@@ -44,7 +44,7 @@ jobs:
           image_directory=""
 
           while IFS= read -r directory; do
-            directory_name="${directory#./}"
+            directory_name="$(basename "$directory")"
 
             if [[ "${directory_name,,}" == "${image,,}" ]]; then
               image_directory="$directory"
@@ -60,20 +60,12 @@ jobs:
           fi
 
           dockerfile="${image_directory}/Dockerfile"
-          test_directory="./test/${image}"
-
-          if [[ ! -f "$dockerfile" ]]; then
-            echo "No Dockerfile exists for image: $image"
-            echo "Expected file: $dockerfile"
-            exit 1
-          fi
-
           test_directory=""
 
           while IFS= read -r directory; do
-            directory_name="${directory#./}"
+            directory_name="$(basename "$directory")"
 
-            if [[ "${directory_name,,}" == "test/${image,,}" ]]; then
+            if [[ "${directory_name,,}" == "${image,,}" ]]; then
               test_directory="$directory"
               break
             fi
@@ -82,6 +74,12 @@ jobs:
           if [[ -z "$test_directory" ]]; then
             echo "No test directory exists for image: $image"
             echo "Expected directory: ./test/${image}"
+            exit 1
+          fi
+
+          if [[ ! -f "$dockerfile" ]]; then
+            echo "No Dockerfile exists for image: $image"
+            echo "Expected file: $dockerfile"
             exit 1
           fi
 
