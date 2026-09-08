@@ -1,5 +1,8 @@
 FROM mcr.microsoft.com/devcontainers/base:ubuntu
 
+LABEL org.opencontainers.image.source="https://github.com/amiasea/devcontainer-images"
+LABEL org.opencontainers.image.description="Amiasea development environment for building and operating Amiasea engineering artifacts."
+
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         wget \
