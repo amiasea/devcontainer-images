@@ -95,6 +95,31 @@ jobs:
           echo "dockerfile=$dockerfile" >> "$GITHUB_OUTPUT"
           echo "test=$test_directory" >> "$GITHUB_OUTPUT"
 
+      - name: Write summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## 🔎 Validation"
+            echo
+            echo "| | |"
+            echo "|---|---|"
+            echo "| **Tag** | \`${GITHUB_REF_NAME}\` |"
+            echo "| **Image** | \`${{ steps.image.outputs.image }}\` |"
+            echo "| **Version** | \`${{ steps.image.outputs.version }}\` |"
+            echo "| **Context** | \`${{ steps.image.outputs.context }}\` |"
+            echo "| **Dockerfile** | \`${{ steps.image.outputs.dockerfile }}\` |"
+            echo "| **Tests** | \`${{ steps.image.outputs.test }}\` |"
+            echo
+            echo "### Result"
+            echo
+            if [[ "${{ steps.image.outcome }}" == "success" ]]; then
+              echo "✅ **Image definition validated successfully.**"
+            else
+              echo "❌ **Image definition validation failed.**"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
   build:
     runs-on: ubuntu-latest
     needs: validate
@@ -162,6 +187,7 @@ jobs:
               -Scope CurrentUser
 
       - name: Test image
+        id: test
         shell: pwsh
         env:
           IMAGE_REFERENCE: ${{ needs.validate.outputs.image }}:${{ needs.validate.outputs.version }}
@@ -172,6 +198,28 @@ jobs:
               -Path "${{ needs.validate.outputs.test }}" `
               -CI `
               -Output Detailed
+
+      - name: Write summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## 🧪 Image Tests"
+            echo
+            echo "| | |"
+            echo "|---|---|"
+            echo "| **Image** | \`${{ needs.validate.outputs.image }}:${{ needs.validate.outputs.version }}\` |"
+            echo "| **Test suite** | \`${{ needs.validate.outputs.test }}\` |"
+            echo "| **Artifact** | \`dev-container-image\` |"
+            echo
+            echo "### Result"
+            echo
+            if [[ "${{ steps.test.outcome }}" == "success" ]]; then
+              echo "✅ **All image tests passed.**"
+            else
+              echo "❌ **Image tests failed.**"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
   publish:
     runs-on: ubuntu-latest
@@ -200,6 +248,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish image
+        id: publish
         shell: bash
         run: |
           set -euo pipefail
@@ -209,3 +258,26 @@ jobs:
 
           docker tag "$source_image" "$published_image"
           docker push "$published_image"
+
+      - name: Write summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## 🚀 Published Image"
+            echo
+            echo "| | |"
+            echo "|---|---|"
+            echo "| **Image** | \`${{ needs.validate.outputs.image }}\` |"
+            echo "| **Version** | \`${{ needs.validate.outputs.version }}\` |"
+            echo "| **Registry** | \`ghcr.io/amiasea\` |"
+            echo "| **Reference** | \`ghcr.io/amiasea/${{ needs.validate.outputs.image }}:${{ needs.validate.outputs.version }}\` |"
+            echo
+            echo "### Result"
+            echo
+            if [[ "${{ steps.publish.outcome }}" == "success" ]]; then
+              echo "✅ **Image published successfully.**"
+            else
+              echo "❌ **Image publication failed.**"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
